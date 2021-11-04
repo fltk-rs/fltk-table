@@ -23,6 +23,7 @@ fn main() {
     let app = app::App::default().with_scheme(app::Scheme::Gtk);
     let mut wind = window::Window::default().with_size(800, 600);
 
+    /// We pass the rows and columns thru the TableOpts field
     let mut table = SmartTable::default(TableOpts {
         rows: 30,
         cols: 15,
@@ -30,12 +31,19 @@ fn main() {
     })
     .with_size(790, 590)
     .center_of_parent();
-
+    
     // the default is false
     table.editable(true);
 
     wind.end();
     wind.show();
+
+    // Just filling the vec with some values
+    for i in 0..30 {
+        for j in 0..15 {
+            table.set_cell_value(i, j, &(i + j).to_string());
+        }
+    }
 
     // set the value at the row,column 4,5 to "another"
     table.set_cell_value(3, 4, "another");
@@ -53,6 +61,7 @@ fn main() {
 }
 ```
 You can retrieve a copy of the data using the `SmartTable::data()` method.
+
 The TableOpts struct also takes styling elements for cells and headers:
 ```rust,no_run
 use fltk::{enums::*, prelude::*, *};
@@ -67,6 +76,8 @@ let mut table = SmartTable::default(TableOpts {
         ..Default::default()
     });
 ```
+
+The row/column header strings can also be changed using the `set_row_header_value()` and `set_col_header_value()` methods, which take an index to the required row/column. 
 */
 
 #![allow(clippy::needless_doctest_main)]
@@ -106,6 +117,7 @@ impl CellData {
     }
 }
 
+/// Contains the parameters for our table, including rows, columns and other styling params
 #[derive(Debug, Clone, Copy)]
 pub struct TableOpts {
     pub rows: i32,
@@ -147,6 +159,7 @@ impl Default for TableOpts {
     }
 }
 
+/// Smart table widget
 #[derive(Debug, Clone)]
 pub struct SmartTable {
     table: table::TableRow,
@@ -157,6 +170,7 @@ pub struct SmartTable {
 }
 
 impl SmartTable {
+    /// Construct a new SmartTable widget using coords, size, label and TableOpts
     pub fn new<S: Into<Option<&'static str>>>(
         x: i32,
         y: i32,
@@ -289,29 +303,31 @@ impl SmartTable {
         temp
     }
 
+    /// Default construct a SmartTable
     pub fn default(opts: TableOpts) -> Self {
         Self::new(0, 0, 0, 0, None, opts)
     }
 
+    /// Create a SmartTable the size of the parent widget
     pub fn default_fill(opts: TableOpts) -> Self {
         Self::new(0, 0, 0, 0, None, opts)
             .size_of_parent()
             .center_of_parent()
     }
 
+    /// Specify whether the table is editable or not
     pub fn editable(&mut self, flag: bool) {
         self.editable = flag;
     }
+
+    /// Check whether the table is editable
     pub fn is_editable(&self) -> bool {
         self.editable
     }
 
+    /// Get a copy of the data
     pub fn data(&self) -> StringMatrix {
         self.data.lock().unwrap().clone()
-    }
-
-    pub fn redraw(&mut self) {
-        self.table.redraw()
     }
 
     fn draw_header(txt: &str, x: i32, y: i32, w: i32, h: i32, opts: &TableOpts) {
@@ -342,22 +358,32 @@ impl SmartTable {
         draw::pop_clip();
     }
 
+    /// Set the cell value, using the row and column to index the data
     pub fn set_cell_value(&mut self, row: i32, col: i32, val: &str) {
         self.data.lock().unwrap()[row as usize][col as usize] = val.to_string();
     }
 
+    /// Get the cell value, using the row and column to index the data
     pub fn cell_value(&self, row: i32, col: i32) -> String {
         self.data.lock().unwrap()[row as usize][col as usize].clone()
     }
+
+    /// Set the row header value at the row index
     pub fn set_row_header_value(&mut self, row: i32, val: &str) {
         self.row_headers.lock().unwrap()[row as usize] = val.to_string();
     }
+
+    /// Set the column header value at the column index
     pub fn set_col_header_value(&mut self, col: i32, val: &str) {
         self.col_headers.lock().unwrap()[col as usize] = val.to_string();
     }
+
+    /// Get the row header value at the row index
     pub fn row_header_value(&mut self, row: i32) -> String {
         self.row_headers.lock().unwrap()[row as usize].clone()
     }
+    
+    /// Get the column header value at the column index
     pub fn col_header_value(&mut self, col: i32) -> String {
         self.col_headers.lock().unwrap()[col as usize].clone()
     }

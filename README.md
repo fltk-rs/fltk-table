@@ -22,6 +22,7 @@ fn main() {
     let app = app::App::default().with_scheme(app::Scheme::Gtk);
     let mut wind = window::Window::default().with_size(800, 600);
 
+    /// We pass the rows and columns thru the TableOpts field
     let mut table = SmartTable::default(TableOpts {
         rows: 30,
         cols: 15,
@@ -35,6 +36,13 @@ fn main() {
 
     wind.end();
     wind.show();
+
+    // Just filling the vec with some values
+    for i in 0..30 {
+        for j in 0..15 {
+            table.set_cell_value(i, j, &(i + j).to_string());
+        }
+    }
 
     // set the value at the row,column 4,5 to "another"
     table.set_cell_value(3, 4, "another");
@@ -52,6 +60,7 @@ fn main() {
 }
 ```
 You can retrieve a copy of the data using the `SmartTable::data()` method.
+
 The TableOpts struct also takes styling elements for cells and headers:
 ```rust
 let mut table = SmartTable::default(TableOpts {
@@ -66,3 +75,5 @@ let mut table = SmartTable::default(TableOpts {
 ```
 
 ![image](screenshots/styled.jpg)
+
+The row/column header strings can also be changed using the `set_row_header_value()` and `set_col_header_value()` methods, which take an index to the required row/column. 

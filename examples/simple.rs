@@ -9,6 +9,7 @@ fn main() {
     let app = app::App::default().with_scheme(app::Scheme::Gtk);
     let mut wind = window::Window::default().with_size(800, 600);
 
+    // We pass the rows and columns thru the TableOpts field
     let mut table = SmartTable::default(TableOpts {
         rows: 30,
         cols: 15,

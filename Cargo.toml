@@ -10,6 +10,12 @@ keywords = ["gui", "ui", "widgets", "bindings", "graphics"]
 categories = ["gui"]
 readme = "README.md"
 license = "MIT"
+exclude = ["./examples"]
 
 [dependencies]
 fltk = "1.2"
+
+[[test]]
+name = "thread"
+path = "tests/thread.rs"
+harness = false
