@@ -23,13 +23,15 @@ fn main() {
     let mut wind = window::Window::default().with_size(800, 600);
 
     /// We pass the rows and columns thru the TableOpts field
-    let mut table = SmartTable::default(TableOpts {
+    let mut table = SmartTable::default()
+    .with_size(790, 590)
+    .center_of_parent()
+    .with_opts(TableOpts {
         rows: 30,
         cols: 15,
+        editable: true,
         ..Default::default()
-    })
-    .with_size(790, 590)
-    .center_of_parent();
+    });
     
     // the default is false
     table.editable(true);

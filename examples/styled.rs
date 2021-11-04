@@ -1,5 +1,6 @@
 use fltk::{
-    app, enums::*,
+    app,
+    enums::*,
     prelude::{GroupExt, WidgetExt},
     window,
 };
@@ -9,18 +10,18 @@ fn main() {
     let app = app::App::default().with_scheme(app::Scheme::Gtk);
     let mut wind = window::Window::default().with_size(800, 600);
 
-    let mut table = SmartTable::default(TableOpts {
-        rows: 30,
-        cols: 15,
-        cell_selection_color: Color::Red.inactive(),
-        header_frame: FrameType::FlatBox,
-        header_color: Color::BackGround.lighter(),
-        cell_border_color: Color::White,
-        ..Default::default()
-    })
-    .with_size(790, 590)
-    .center_of_parent();
-    table.editable(true);
+    let mut table = SmartTable::default()
+        .with_size(790, 590)
+        .center_of_parent()
+        .with_opts(TableOpts {
+            rows: 30,
+            cols: 15,
+            cell_selection_color: Color::Red.inactive(),
+            header_frame: FrameType::FlatBox,
+            header_color: Color::BackGround.lighter(),
+            cell_border_color: Color::White,
+            ..Default::default()
+        });
 
     wind.end();
     wind.show();

@@ -23,17 +23,16 @@ fn main() {
     let app = app::App::default().with_scheme(app::Scheme::Gtk);
     let mut wind = window::Window::default().with_size(800, 600);
 
-    /// We pass the rows and columns thru the TableOpts field
-    let mut table = SmartTable::default(TableOpts {
+    // We pass the rows and columns thru the TableOpts field
+    let mut table = SmartTable::default()
+    .with_size(790, 590)
+    .center_of_parent()
+    .with_opts(TableOpts {
         rows: 30,
         cols: 15,
+        editable: true,
         ..Default::default()
-    })
-    .with_size(790, 590)
-    .center_of_parent();
-    
-    // the default is false
-    table.editable(true);
+    });
 
     wind.end();
     wind.show();
@@ -66,7 +65,7 @@ The TableOpts struct also takes styling elements for cells and headers:
 ```rust,no_run
 use fltk::{enums::*, prelude::*, *};
 use fltk_table::{SmartTable, TableOpts};
-let mut table = SmartTable::default(TableOpts {
+let mut table = SmartTable::default().with_opts(TableOpts {
         rows: 30,
         cols: 15,
         cell_selection_color: Color::Red.inactive(),
@@ -81,6 +80,7 @@ The row/column header strings can also be changed using the `set_row_header_valu
 */
 
 #![allow(clippy::needless_doctest_main)]
+#![feature(mutex_unlock)]
 
 use fltk::{
     app, draw,
@@ -122,6 +122,7 @@ impl CellData {
 pub struct TableOpts {
     pub rows: i32,
     pub cols: i32,
+    pub editable: bool,
     pub cell_color: Color,
     pub cell_font: Font,
     pub cell_font_color: Color,
@@ -142,6 +143,7 @@ impl Default for TableOpts {
         Self {
             rows: 1,
             cols: 1,
+            editable: false,
             cell_color: Color::BackGround2,
             cell_font: Font::Helvetica,
             cell_font_color: Color::Gray0,
@@ -166,67 +168,88 @@ pub struct SmartTable {
     data: Arc<Mutex<StringMatrix>>,
     row_headers: Arc<Mutex<Vec<String>>>,
     col_headers: Arc<Mutex<Vec<String>>>,
-    editable: bool,
+}
+
+impl Default for SmartTable {
+    fn default() -> Self {
+        Self::new(0, 0, 0, 0, None)
+    }
 }
 
 impl SmartTable {
-    /// Construct a new SmartTable widget using coords, size, label and TableOpts
+    /// Construct a new SmartTable widget using coords, size and label
     pub fn new<S: Into<Option<&'static str>>>(
         x: i32,
         y: i32,
         w: i32,
         h: i32,
         label: S,
-        opts: TableOpts,
+        // opts: TableOpts,
     ) -> Self {
         let table = table::TableRow::new(x, y, w, h, label);
         table.end();
-        let data = Arc::new(Mutex::new(vec![
-            vec![String::new(); opts.cols as _];
-            opts.rows as _
-        ]));
+
+        Self {
+            table,
+            data: Default::default(),
+            row_headers: Default::default(),
+            col_headers: Default::default(),
+        }
+    }
+
+    /// Create a SmartTable the size of the parent widget
+    pub fn default_fill() -> Self {
+        Self::new(0, 0, 0, 0, None)
+            .size_of_parent()
+            .center_of_parent()
+    }
+
+    /// Sets the tables options
+    pub fn set_opts(&mut self, opts: TableOpts) {
+        let mut data = self.data.lock().unwrap();
+        data.resize(opts.rows as _, vec![]);
+        for v in data.iter_mut() {
+            v.resize(opts.cols as _, String::new());
+        }
+        drop(data);
 
         let mut row_headers = vec![];
         for i in 0..opts.rows {
             row_headers.push(i.to_string());
         }
         let row_headers = Arc::new(Mutex::new(row_headers));
+        self.row_headers = row_headers;
 
         let mut col_headers = vec![];
         for i in 0..opts.cols {
             col_headers.push(format!("{}", (i + 65) as u8 as char));
         }
         let col_headers = Arc::new(Mutex::new(col_headers));
-
-        let mut temp = Self {
-            table,
-            data,
-            row_headers,
-            col_headers,
-            editable: false,
-        };
-
+        self.col_headers = col_headers;
+        
         let len = opts.rows;
         let inner_len = opts.cols;
+
         let cell = Rc::from(RefCell::from(CellData::default()));
-        temp.table.set_rows(len as i32);
-        temp.table.set_row_header(true);
-        temp.table.set_row_resize(true);
-        temp.table.set_cols(inner_len as i32);
-        temp.table.set_col_header(true);
-        temp.table.set_col_resize(true);
-        temp.table.end();
+        self.table.set_rows(len as i32);
+        self.table.set_cols(inner_len as i32);
+        self.table.set_row_header(true);
+        self.table.set_row_resize(true);
+        self.table.set_col_header(true);
+        self.table.set_col_resize(true);
+        self.table.end();
 
         // Called when the table is drawn then when it's redrawn due to events
-        temp.table.draw_cell({
+        self.table.draw_cell({
             let cell = cell.clone();
-            let data = temp.data.clone();
-            let row_headers = temp.row_headers.clone();
-            let col_headers = temp.col_headers.clone();
+            let data = self.data.clone();
+            let row_headers = self.row_headers.clone();
+            let col_headers = self.col_headers.clone();
             move |t, ctx, row, col, x, y, w, h| {
                 let data = data.lock().unwrap();
                 let row_headers = row_headers.lock().unwrap();
                 let col_headers = col_headers.lock().unwrap();
+                // let opts = opts.lock().unwrap();
                 match ctx {
                     table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
                     table::TableContext::ColHeader => {
@@ -254,15 +277,15 @@ impl SmartTable {
             }
         });
 
-        if temp.editable {
+        if opts.editable {
             let mut inp = input::Input::default();
             inp.set_trigger(CallbackTrigger::EnterKey);
             inp.hide();
 
             inp.set_callback({
                 let cell = cell.clone();
-                let data = temp.data.clone();
-                let mut table = temp.table.clone();
+                let data = self.data.clone();
+                let mut table = self.table.clone();
                 move |i| {
                     let cell = cell.borrow();
                     data.lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
@@ -284,8 +307,8 @@ impl SmartTable {
                 _ => false,
             });
 
-            temp.table.handle({
-                let data = temp.data.clone();
+            self.table.handle({
+                let data = self.data.clone();
                 move |_, ev| match ev {
                     Event::Released => {
                         let cell = cell.borrow();
@@ -300,29 +323,12 @@ impl SmartTable {
                 }
             });
         }
-        temp
     }
 
-    /// Default construct a SmartTable
-    pub fn default(opts: TableOpts) -> Self {
-        Self::new(0, 0, 0, 0, None, opts)
-    }
-
-    /// Create a SmartTable the size of the parent widget
-    pub fn default_fill(opts: TableOpts) -> Self {
-        Self::new(0, 0, 0, 0, None, opts)
-            .size_of_parent()
-            .center_of_parent()
-    }
-
-    /// Specify whether the table is editable or not
-    pub fn editable(&mut self, flag: bool) {
-        self.editable = flag;
-    }
-
-    /// Check whether the table is editable
-    pub fn is_editable(&self) -> bool {
-        self.editable
+    /// Instantiate with TableOpts
+    pub fn with_opts(mut self, opts: TableOpts) -> Self {
+        self.set_opts(opts);
+        self
     }
 
     /// Get a copy of the data
