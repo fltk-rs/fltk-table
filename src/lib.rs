@@ -330,6 +330,11 @@ impl SmartTable {
         self.data.lock().unwrap().clone()
     }
 
+    /// Get the inner data
+    pub fn data_ref(&self) -> Arc<Mutex<StringMatrix>> {
+        self.data.clone()
+    }
+
     fn draw_header(txt: &str, x: i32, y: i32, w: i32, h: i32, opts: &TableOpts) {
         draw::push_clip(x, y, w, h);
         draw::draw_box(opts.header_frame, x, y, w, h, opts.header_color);
