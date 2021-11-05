@@ -80,7 +80,6 @@ The row/column header strings can also be changed using the `set_row_header_valu
 */
 
 #![allow(clippy::needless_doctest_main)]
-#![feature(mutex_unlock)]
 
 use fltk::{
     app, draw,
