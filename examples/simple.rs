@@ -15,7 +15,7 @@ fn main() {
     .center_of_parent()
     .with_opts(TableOpts {
         rows: 30,
-        cols: 15,
+        cols: 1000,
         editable: true,
         ..Default::default()
     });

@@ -221,7 +221,18 @@ impl SmartTable {
 
         let mut col_headers = vec![];
         for i in 0..opts.cols {
-            col_headers.push(format!("{}", (i + 65) as u8 as char));
+            let mut pref = String::new();
+            if i > 25 {
+                let t = (i / 26) as i32;
+                if t > 26 {
+                    col_headers.push(i.to_string());
+                } else {
+                    pref.push((t - 1 + 65) as u8 as char);
+                    col_headers.push(format!("{}{}", pref, (i - (26 * t) + 65) as u8 as char));
+                }
+            } else {
+                col_headers.push(format!("{}", (i + 65) as u8 as char));
+            }
         }
         let col_headers = Arc::new(Mutex::new(col_headers));
         self.col_headers = col_headers;
