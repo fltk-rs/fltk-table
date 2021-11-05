@@ -21,13 +21,48 @@ fn main() {
     wind.end();
     wind.show();
 
-    std::thread::spawn(move || {
+    std::thread::spawn({
+        let mut table = table.clone();
+        move || {
+        app::sleep(0.1);
         loop {
             // Just filling the vec with some values
             for i in 0..30 {
                 for j in 0..15 {
                     table.set_cell_value(i, j, &(i + j).to_string());
-                    app::sleep(0.3);
+                    app::sleep(0.03);
+                    app::awake();
+                    table.redraw();
+                }
+            }
+        }
+    }});
+
+    std::thread::spawn({
+        let mut table = table.clone();
+        move || {
+        app::sleep(0.11);
+        loop {
+            // Just filling the vec with some values
+            for i in 0..30 {
+                for j in 0..15 {
+                    table.set_cell_value(0, 0, &(i + j).to_string());
+                    app::sleep(0.01);
+                    app::awake();
+                    table.redraw();
+                }
+            }
+        }
+    }});
+
+    std::thread::spawn(move || {
+        app::sleep(0.12);
+        loop {
+            // Just filling the vec with some values
+            for i in 0..30 {
+                for j in 0..15 {
+                    table.set_cell_value(0, 0, &(i + j).to_string());
+                    app::sleep(0.01);
                     app::awake();
                     table.redraw();
                 }
