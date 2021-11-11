@@ -164,6 +164,7 @@ impl Default for TableOpts {
 #[derive(Debug, Clone)]
 pub struct SmartTable {
     table: table::TableRow,
+    inp: input::Input,
     data: Arc<Mutex<StringMatrix>>,
     row_headers: Arc<Mutex<Vec<String>>>,
     col_headers: Arc<Mutex<Vec<String>>>,
@@ -183,13 +184,14 @@ impl SmartTable {
         w: i32,
         h: i32,
         label: S,
-        // opts: TableOpts,
     ) -> Self {
         let table = table::TableRow::new(x, y, w, h, label);
         table.end();
+        let inp = input::Input::default();
 
         Self {
             table,
+            inp,
             data: Default::default(),
             row_headers: Default::default(),
             col_headers: Default::default(),
@@ -288,7 +290,7 @@ impl SmartTable {
         });
 
         if opts.editable {
-            let mut inp = input::Input::default();
+            let mut inp = self.inp.clone();
             inp.set_trigger(CallbackTrigger::EnterKey);
             inp.hide();
 
@@ -339,6 +341,11 @@ impl SmartTable {
     pub fn with_opts(mut self, opts: TableOpts) -> Self {
         self.set_opts(opts);
         self
+    }
+
+    /// Get the input widget
+    pub fn input(&mut self) -> &mut input::Input {
+        &mut self.inp
     }
 
     /// Get a copy of the data
