@@ -33,9 +33,6 @@ fn main() {
         ..Default::default()
     });
     
-    // the default is false
-    table.editable(true);
-
     wind.end();
     wind.show();
 
