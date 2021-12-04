@@ -207,7 +207,7 @@ impl SmartTable {
 
     /// Sets the tables options
     pub fn set_opts(&mut self, opts: TableOpts) {
-        let mut data = self.data.lock().unwrap();
+        let mut data = self.data.try_lock().unwrap();
         data.resize(opts.rows as _, vec![]);
         for v in data.iter_mut() {
             v.resize(opts.cols as _, String::new());
@@ -258,33 +258,33 @@ impl SmartTable {
             let row_headers = self.row_headers.clone();
             let col_headers = self.col_headers.clone();
             move |t, ctx, row, col, x, y, w, h| {
-                let data = data.lock().unwrap();
-                let row_headers = row_headers.lock().unwrap();
-                let col_headers = col_headers.lock().unwrap();
-                // let opts = opts.lock().unwrap();
-                match ctx {
-                    table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
-                    table::TableContext::ColHeader => {
-                        Self::draw_header(&col_headers[col as usize], x, y, w, h, &opts)
-                    } // Column titles
-                    table::TableContext::RowHeader => {
-                        Self::draw_header(&row_headers[row as usize], x, y, w, h, &opts)
-                    } // Row titles
-                    table::TableContext::Cell => {
-                        if t.is_selected(row, col) {
-                            cell.borrow_mut().select(row, col, x, y, w, h); // Captures the cell information
+                if let Ok(data) = data.try_lock() {
+                    let row_headers = row_headers.try_lock().unwrap();
+                    let col_headers = col_headers.try_lock().unwrap();
+                    match ctx {
+                        table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
+                        table::TableContext::ColHeader => {
+                            Self::draw_header(&col_headers[col as usize], x, y, w, h, &opts)
+                        } // Column titles
+                        table::TableContext::RowHeader => {
+                            Self::draw_header(&row_headers[row as usize], x, y, w, h, &opts)
+                        } // Row titles
+                        table::TableContext::Cell => {
+                            if t.is_selected(row, col) {
+                                cell.borrow_mut().select(row, col, x, y, w, h); // Captures the cell information
+                            }
+                            Self::draw_data(
+                                &data[row as usize][col as usize].to_string(),
+                                x,
+                                y,
+                                w,
+                                h,
+                                t.is_selected(row, col),
+                                &opts,
+                            );
                         }
-                        Self::draw_data(
-                            &data[row as usize][col as usize].to_string(),
-                            x,
-                            y,
-                            w,
-                            h,
-                            t.is_selected(row, col),
-                            &opts,
-                        );
+                        _ => (),
                     }
-                    _ => (),
                 }
             }
         });
@@ -300,7 +300,7 @@ impl SmartTable {
                 let mut table = self.table.clone();
                 move |i| {
                     let cell = cell.borrow();
-                    data.lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
+                    data.try_lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
                     i.set_value("");
                     i.hide();
                     table.redraw();
@@ -323,13 +323,17 @@ impl SmartTable {
                 let data = self.data.clone();
                 move |_, ev| match ev {
                     Event::Released => {
-                        let cell = cell.borrow();
-                        inp.resize(cell.x, cell.y, cell.w, cell.h);
-                        inp.set_value(&data.lock().unwrap()[cell.row as usize][cell.col as usize]);
-                        inp.show();
-                        inp.take_focus().ok();
-                        inp.redraw();
-                        true
+                        if let Ok(data) = data.try_lock() {
+                            let cell = cell.borrow();
+                            inp.resize(cell.x, cell.y, cell.w, cell.h);
+                            inp.set_value(&data[cell.row as usize][cell.col as usize]);
+                            inp.show();
+                            inp.take_focus().ok();
+                            inp.redraw();
+                            true
+                        } else {
+                            false
+                        }
                     }
                     _ => false,
                 }
@@ -350,7 +354,7 @@ impl SmartTable {
 
     /// Get a copy of the data
     pub fn data(&self) -> StringMatrix {
-        self.data.lock().unwrap().clone()
+        self.data.try_lock().unwrap().clone()
     }
 
     /// Get the inner data
@@ -388,32 +392,40 @@ impl SmartTable {
 
     /// Set the cell value, using the row and column to index the data
     pub fn set_cell_value(&mut self, row: i32, col: i32, val: &str) {
-        self.data.lock().unwrap()[row as usize][col as usize] = val.to_string();
+        self.data.try_lock().unwrap()[row as usize][col as usize] = val.to_string();
     }
 
     /// Get the cell value, using the row and column to index the data
     pub fn cell_value(&self, row: i32, col: i32) -> String {
-        self.data.lock().unwrap()[row as usize][col as usize].clone()
+        self.data.try_lock().unwrap()[row as usize][col as usize].clone()
     }
 
     /// Set the row header value at the row index
     pub fn set_row_header_value(&mut self, row: i32, val: &str) {
-        self.row_headers.lock().unwrap()[row as usize] = val.to_string();
+        self.row_headers.try_lock().unwrap()[row as usize] = val.to_string();
     }
 
     /// Set the column header value at the column index
     pub fn set_col_header_value(&mut self, col: i32, val: &str) {
-        self.col_headers.lock().unwrap()[col as usize] = val.to_string();
+        self.col_headers.try_lock().unwrap()[col as usize] = val.to_string();
     }
 
     /// Get the row header value at the row index
     pub fn row_header_value(&mut self, row: i32) -> String {
-        self.row_headers.lock().unwrap()[row as usize].clone()
+        self.row_headers.try_lock().unwrap()[row as usize].clone()
     }
     
     /// Get the column header value at the column index
     pub fn col_header_value(&mut self, col: i32) -> String {
-        self.col_headers.lock().unwrap()[col as usize].clone()
+        self.col_headers.try_lock().unwrap()[col as usize].clone()
+    }
+
+    /// Set a callback for the SmartTable
+    pub fn set_callback<F: FnMut(&mut Self) + 'static>(&mut self, mut cb: F) {
+        let mut s = self.clone();
+        self.table.set_callback(move |_| {
+            cb(&mut s);
+        });
     }
 }
 
