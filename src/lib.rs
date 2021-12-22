@@ -430,6 +430,16 @@ impl SmartTable {
         self.table.set_rows(self.table.rows()+1);
     }
 
+    /// Append an empty row to your table
+    pub fn append_empty_row(&mut self, val: &str) {
+        let mut data = self.data.try_lock().unwrap();
+        let cols = data[0].len();
+        data.push(vec![]);
+        data.last_mut().unwrap().resize(cols as _ , String::new());
+        self.row_headers.try_lock().unwrap().push(val.to_string());
+        self.table.set_rows(self.table.rows()+1);
+    }
+
     /// Insert an empty column at the column index
     pub fn insert_empty_col(&mut self, col: i32, val: &str) {
         let mut data = self.data.try_lock().unwrap();
@@ -437,6 +447,16 @@ impl SmartTable {
             v.insert(col as _, String::new());
         }
         self.col_headers.try_lock().unwrap().insert(col as _, val.to_string());
+        self.table.set_cols(self.table.cols()+1);
+    }
+
+    /// Append an empty column to your table
+    pub fn append_empty_col(&mut self, val: &str) {
+        let mut data = self.data.try_lock().unwrap();
+        for v in data.iter_mut() {
+            v.push(String::new());
+        }
+        self.col_headers.try_lock().unwrap().push(val.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
