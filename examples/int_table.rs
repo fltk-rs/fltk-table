@@ -23,7 +23,7 @@ fn main() {
     wind.end();
     wind.show();
 
-    table.input().set_type(input::InputType::Int);
+    table.input().as_mut().unwrap().set_type(input::InputType::Int);
 
     // set the value at the row,column 4,5 to "another", notice that indices start at 0
     table.set_cell_value(3, 4, "10");

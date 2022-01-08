@@ -164,7 +164,7 @@ impl Default for TableOpts {
 #[derive(Debug, Clone)]
 pub struct SmartTable {
     table: table::TableRow,
-    inp: input::Input,
+    inp: Option<input::Input>,
     data: Arc<Mutex<StringMatrix>>,
     row_headers: Arc<Mutex<Vec<String>>>,
     col_headers: Arc<Mutex<Vec<String>>>,
@@ -187,7 +187,7 @@ impl SmartTable {
     ) -> Self {
         let table = table::TableRow::new(x, y, w, h, label);
         table.end();
-        let inp = input::Input::default();
+        let inp = None;
 
         Self {
             table,
@@ -216,7 +216,7 @@ impl SmartTable {
 
         let mut row_headers = vec![];
         for i in 0..opts.rows {
-            row_headers.push(i.to_string());
+            row_headers.push((i + 1).to_string());
         }
         let row_headers = Arc::new(Mutex::new(row_headers));
         self.row_headers = row_headers;
@@ -290,7 +290,8 @@ impl SmartTable {
         });
 
         if opts.editable {
-            let mut inp = self.inp.clone();
+            self.inp = Some(input::Input::default());
+            let mut inp = self.inp.as_ref().unwrap().clone();
             inp.set_trigger(CallbackTrigger::EnterKey);
             inp.hide();
 
@@ -348,7 +349,7 @@ impl SmartTable {
     }
 
     /// Get the input widget
-    pub fn input(&mut self) -> &mut input::Input {
+    pub fn input(&mut self) -> &mut Option<input::Input> {
         &mut self.inp
     }
 
@@ -421,42 +422,88 @@ impl SmartTable {
     }
 
     /// Insert an empty row at the row index
-    pub fn insert_empty_row(&mut self, row: i32, val: &str) {
+    pub fn insert_empty_row(&mut self, row: i32, row_header: &str) {
         let mut data = self.data.try_lock().unwrap();
         let cols = data[0].len();
         data.insert(row as _, vec![]);
         data[row as usize ].resize(cols as _ , String::new());
-        self.row_headers.try_lock().unwrap().insert(row as _, val.to_string());
+        self.row_headers.try_lock().unwrap().insert(row as _, row_header.to_string());
+        self.table.set_rows(self.table.rows()+1);
+    }
+
+    /// Append a row to your table
+    pub fn insert_row(&mut self, row: i32, row_header: &str, vals: &[&str]) {
+        let mut data = self.data.try_lock().unwrap();
+        let cols = data[0].len();
+        assert!(cols == vals.len());
+        data.insert(row as _, vals.iter().map(|v| v.to_string()).collect());
+        self.row_headers.try_lock().unwrap().push(row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Append an empty row to your table
-    pub fn append_empty_row(&mut self, val: &str) {
+    pub fn append_empty_row(&mut self, row_header: &str) {
         let mut data = self.data.try_lock().unwrap();
         let cols = data[0].len();
         data.push(vec![]);
         data.last_mut().unwrap().resize(cols as _ , String::new());
-        self.row_headers.try_lock().unwrap().push(val.to_string());
+        self.row_headers.try_lock().unwrap().push(row_header.to_string());
+        self.table.set_rows(self.table.rows()+1);
+    }
+
+    /// Append a row to your table
+    pub fn append_row(&mut self, row_header: &str, vals: &[&str]) {
+        let mut data = self.data.try_lock().unwrap();
+        let cols = data[0].len();
+        assert!(cols == vals.len());
+        data.push(vals.iter().map(|v| v.to_string()).collect());
+        self.row_headers.try_lock().unwrap().push(row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Insert an empty column at the column index
-    pub fn insert_empty_col(&mut self, col: i32, val: &str) {
+    pub fn insert_empty_col(&mut self, col: i32, col_header: &str) {
         let mut data = self.data.try_lock().unwrap();
         for v in data.iter_mut() {
             v.insert(col as _, String::new());
         }
-        self.col_headers.try_lock().unwrap().insert(col as _, val.to_string());
+        self.col_headers.try_lock().unwrap().insert(col as _, col_header.to_string());
+        self.table.set_cols(self.table.cols()+1);
+    }
+
+    /// Append a column to your table
+    pub fn insert_col(&mut self, col: i32, col_header: &str, vals: &[&str]) {
+        let mut data = self.data.try_lock().unwrap();
+        assert!(vals.len() == self.table.rows() as usize);
+        let mut count = 0;
+        for v in data.iter_mut() {
+            v.insert(col as _, vals[count].to_string());
+            count += 1;
+        }
+        self.col_headers.try_lock().unwrap().push(col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
     /// Append an empty column to your table
-    pub fn append_empty_col(&mut self, val: &str) {
+    pub fn append_empty_col(&mut self, col_header: &str) {
         let mut data = self.data.try_lock().unwrap();
         for v in data.iter_mut() {
             v.push(String::new());
         }
-        self.col_headers.try_lock().unwrap().push(val.to_string());
+        self.col_headers.try_lock().unwrap().push(col_header.to_string());
+        self.table.set_cols(self.table.cols()+1);
+    }
+
+    /// Append a column to your table
+    pub fn append_col(&mut self, col_header: &str, vals: &[&str]) {
+        let mut data = self.data.try_lock().unwrap();
+        assert!(vals.len() == self.table.rows() as usize);
+        let mut count = 0;
+        for v in data.iter_mut() {
+            v.push(vals[count].to_string());
+            count += 1;
+        }
+        self.col_headers.try_lock().unwrap().push(col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
@@ -484,6 +531,26 @@ impl SmartTable {
         self.table.set_callback(move |_| {
             cb(&mut s);
         });
+    }
+
+    /// Clears all cells in the table
+    pub fn clear(&mut self) {
+        let mut data = self.data.try_lock().unwrap();
+        for v in data.iter_mut() {
+            for c in v.iter_mut() {
+                *c = String::new();
+            }
+        }
+    }
+
+    /// Returns the row count
+    pub fn row_count(&self) -> i32 {
+        self.table.rows()
+    }
+
+    /// Returns the column count
+    pub fn column_count(&self) -> i32 {
+        self.table.cols()
     }
 }
 
