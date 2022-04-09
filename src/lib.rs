@@ -129,6 +129,7 @@ pub struct TableOpts {
     pub cell_selection_color: Color,
     pub cell_align: Align,
     pub cell_border_color: Color,
+    pub cell_padding: i32,
     pub header_font: Font,
     pub header_frame: FrameType,
     pub header_color: Color,
@@ -150,6 +151,7 @@ impl Default for TableOpts {
             cell_selection_color: Color::from_u32(0x00D3_D3D3),
             cell_align: Align::Center,
             cell_border_color: Color::Gray0,
+            cell_padding: 1,
             header_font: Font::Helvetica,
             header_frame: FrameType::ThinUpBox,
             header_color: Color::FrameDefault,
@@ -385,7 +387,7 @@ impl SmartTable {
         draw::draw_rectf(x, y, w, h);
         draw::set_draw_color(opts.cell_font_color);
         draw::set_font(opts.cell_font, opts.cell_font_size);
-        draw::draw_text2(txt, x, y, w, h, opts.cell_align);
+        draw::draw_text2(txt, x + opts.cell_padding, y, w - opts.cell_padding * 2, h, opts.cell_align);
         draw::set_draw_color(opts.cell_border_color);
         draw::draw_rect(x, y, w, h);
         draw::pop_clip();
