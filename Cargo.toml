@@ -1,6 +1,6 @@
 [package]
 name = "fltk-table"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["MoAlyousef <mohammed.alyousef@neurosrg.com>"]
 edition = "2018"
 description = "A smart table widget for fltk-rs"
@@ -13,7 +13,7 @@ license = "MIT"
 exclude = ["./examples"]
 
 [dependencies]
-fltk = "1.2"
+fltk = "1.3"
 
 [[test]]
 name = "thread"
