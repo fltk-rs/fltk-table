@@ -554,6 +554,46 @@ impl SmartTable {
     pub fn column_count(&self) -> i32 {
         self.table.cols()
     }
+
+    /// Get the column's width
+    pub fn col_width(&self, col: i32) -> i32 {
+        self.table.col_width(col)
+    }
+
+    /// Get the row's height
+    pub fn row_height(&self, row: i32) -> i32 {
+        self.table.row_height(row)
+    }
+
+    /// Set column's width
+    pub fn set_col_width(&mut self, col: i32, width: i32) {
+        self.table.set_col_width(col, width);
+    }
+
+    /// Set the row's height
+    pub fn set_row_height(&mut self, row: i32, height: i32) {
+        self.table.set_row_height(row, height);
+    }
+
+    /// Get the column header height
+    pub fn col_header_height(&self) -> i32 {
+        self.table.col_header_height()
+    }
+
+    /// Get the row header width
+    pub fn row_header_width(&self) -> i32 {
+        self.table.row_header_width()
+    }
+
+    /// Set column header height
+    pub fn set_col_header_height(&mut self, height: i32) {
+        self.table.set_col_header_height(height);
+    }
+
+    /// Set the row header width
+    pub fn set_row_header_width(&mut self, width: i32) {
+        self.table.set_row_header_width(width);
+    }
 }
 
 fltk::widget_extends!(SmartTable, table::TableRow, table);
