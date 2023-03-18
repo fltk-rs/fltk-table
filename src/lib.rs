@@ -426,7 +426,7 @@ impl SmartTable {
     /// Insert an empty row at the row index
     pub fn insert_empty_row(&mut self, row: i32, row_header: &str) {
         let mut data = self.data.try_lock().unwrap();
-        let cols = data[0].len();
+        let cols = self.column_count() as usize;
         data.insert(row as _, vec![]);
         data[row as usize ].resize(cols as _ , String::new());
         self.row_headers.try_lock().unwrap().insert(row as _, row_header.to_string());
@@ -436,7 +436,7 @@ impl SmartTable {
     /// Append a row to your table
     pub fn insert_row(&mut self, row: i32, row_header: &str, vals: &[&str]) {
         let mut data = self.data.try_lock().unwrap();
-        let cols = data[0].len();
+        let cols = self.column_count() as usize;
         assert!(cols == vals.len());
         data.insert(row as _, vals.iter().map(|v| v.to_string()).collect());
         self.row_headers.try_lock().unwrap().push(row_header.to_string());
@@ -446,7 +446,7 @@ impl SmartTable {
     /// Append an empty row to your table
     pub fn append_empty_row(&mut self, row_header: &str) {
         let mut data = self.data.try_lock().unwrap();
-        let cols = data[0].len();
+        let cols = self.column_count() as usize;
         data.push(vec![]);
         data.last_mut().unwrap().resize(cols as _ , String::new());
         self.row_headers.try_lock().unwrap().push(row_header.to_string());
@@ -456,7 +456,7 @@ impl SmartTable {
     /// Append a row to your table
     pub fn append_row(&mut self, row_header: &str, vals: &[&str]) {
         let mut data = self.data.try_lock().unwrap();
-        let cols = data[0].len();
+        let cols = self.column_count() as usize;
         assert!(cols == vals.len());
         data.push(vals.iter().map(|v| v.to_string()).collect());
         self.row_headers.try_lock().unwrap().push(row_header.to_string());
