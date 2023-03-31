@@ -1,5 +1,9 @@
 # Changelog
 
+
+## [0.3.0] - 2023-04-01
+- Update to Rust edition 2021 and fltk-rs 1.4.
+
 ## [0.2.2] - 2023-03-18
 - Get and set width/height of rows/columns by @hwjsnc.
 - Determine column count using inner table, fixing issue #14, by @hwjsnc.
