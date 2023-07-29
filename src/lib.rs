@@ -163,13 +163,14 @@ impl Default for TableOpts {
 }
 
 /// Smart table widget
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SmartTable {
     table: table::TableRow,
     inp: Option<input::Input>,
     data: Arc<Mutex<StringMatrix>>,
     row_headers: Arc<Mutex<Vec<String>>>,
     col_headers: Arc<Mutex<Vec<String>>>,
+    on_update_callback: Arc<Mutex<Box<dyn FnMut(i32, i32, String) + Send>>>,
 }
 
 impl Default for SmartTable {
@@ -190,6 +191,8 @@ impl SmartTable {
         let table = table::TableRow::new(x, y, w, h, label);
         table.end();
         let inp = None;
+        let on_update_callback: Box<dyn FnMut(i32, i32, String) + Send> = Box::new(|_, _, _| ());
+        let on_update_callback = Arc::new(Mutex::new(on_update_callback));
 
         Self {
             table,
@@ -197,6 +200,7 @@ impl SmartTable {
             data: Default::default(),
             row_headers: Default::default(),
             col_headers: Default::default(),
+            on_update_callback,
         }
     }
 
@@ -301,8 +305,10 @@ impl SmartTable {
                 let cell = cell.clone();
                 let data = self.data.clone();
                 let mut table = self.table.clone();
+                let on_update_callback = self.on_update_callback.clone();
                 move |i| {
                     let cell = cell.borrow();
+                    on_update_callback.try_lock().unwrap()(cell.row, cell.col, i.value());
                     data.try_lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
                     i.set_value("");
                     i.hide();
@@ -535,6 +541,12 @@ impl SmartTable {
         });
     }
 
+    /// Set a callback for on user input
+    /// callback function takes the values row, col, and the new value of the cell
+    pub fn set_on_update_callback<F: FnMut(i32, i32, String) + Send + 'static>(&mut self, cb: F) {
+        *self.on_update_callback.try_lock().unwrap() = Box::new(cb);
+    }
+
     /// Clears all cells in the table
     pub fn clear(&mut self) {
         let mut data = self.data.try_lock().unwrap();
@@ -593,6 +605,17 @@ impl SmartTable {
     /// Set the row header width
     pub fn set_row_header_width(&mut self, width: i32) {
         self.table.set_row_header_width(width);
+    }
+}
+
+impl std::fmt::Debug for SmartTable {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fmt.debug_struct("SmartTable")
+            .field("table", &self.table)
+            .field("data", &self.data)
+            .field("row_headers", &self.row_headers)
+            .field("col_headers", &self.col_headers)
+            .finish()
     }
 }
 
