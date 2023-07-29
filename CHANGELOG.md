@@ -1,6 +1,9 @@
 # Changelog
 
 
+## [0.3.1] - 2023-07-29
+- Adds SmartTable::set_on_update_callback by @XPXPv2.
+
 ## [0.3.0] - 2023-04-01
 - Update to Rust edition 2021 and fltk-rs 1.4.
 
