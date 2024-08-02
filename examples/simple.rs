@@ -11,14 +11,14 @@ fn main() {
 
     // We pass the rows and columns thru the TableOpts field
     let mut table = SmartTable::default()
-    .with_size(790, 590)
-    .center_of_parent()
-    .with_opts(TableOpts {
-        rows: 30,
-        cols: 30,
-        editable: true,
-        ..Default::default()
-    });
+        .with_size(790, 590)
+        .center_of_parent()
+        .with_opts(TableOpts {
+            rows: 30,
+            cols: 30,
+            editable: true,
+            ..Default::default()
+        });
 
     wind.end();
     wind.show();

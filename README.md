@@ -5,8 +5,8 @@ A smart table widget for fltk-rs. It aims to reduce the amount of boilerplate re
 ## Usage
 ```toml
 [dependencies]
-fltk = "1.2"
-fltk-table = "0.1"
+fltk = "1.4"
+fltk-table = "0.3"
 ```
 
 ## Example
@@ -61,7 +61,7 @@ fn main() {
 You can retrieve a copy of the data using the `SmartTable::data()` method.
 
 The TableOpts struct also takes styling elements for cells and headers:
-```rust
+```rust,ignore
 let mut table = SmartTable::default(TableOpts {
         rows: 30,
         cols: 15,

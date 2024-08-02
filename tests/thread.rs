@@ -10,13 +10,13 @@ fn main() {
     let mut wind = window::Window::default().with_size(800, 600);
 
     let mut table = SmartTable::default()
-    .with_size(790, 590)
-    .center_of_parent()
-    .with_opts(TableOpts {
-        rows: 30,
-        cols: 15,
-        ..Default::default()
-    });
+        .with_size(790, 590)
+        .center_of_parent()
+        .with_opts(TableOpts {
+            rows: 30,
+            cols: 15,
+            ..Default::default()
+        });
 
     wind.end();
     wind.show();
@@ -24,36 +24,38 @@ fn main() {
     std::thread::spawn({
         let mut table = table.clone();
         move || {
-        app::sleep(0.1);
-        loop {
-            // Just filling the vec with some values
-            for i in 0..30 {
-                for j in 0..15 {
-                    table.set_cell_value(i, j, &(i + j).to_string());
-                    app::sleep(0.03);
-                    app::awake();
-                    table.redraw();
+            app::sleep(0.1);
+            loop {
+                // Just filling the vec with some values
+                for i in 0..30 {
+                    for j in 0..15 {
+                        table.set_cell_value(i, j, &(i + j).to_string());
+                        app::sleep(0.03);
+                        app::awake();
+                        table.redraw();
+                    }
                 }
             }
         }
-    }});
+    });
 
     std::thread::spawn({
         let mut table = table.clone();
         move || {
-        app::sleep(0.11);
-        loop {
-            // Just filling the vec with some values
-            for i in 0..30 {
-                for j in 0..15 {
-                    table.set_cell_value(0, 0, &(i + j).to_string());
-                    app::sleep(0.01);
-                    app::awake();
-                    table.redraw();
+            app::sleep(0.11);
+            loop {
+                // Just filling the vec with some values
+                for i in 0..30 {
+                    for j in 0..15 {
+                        table.set_cell_value(0, 0, &(i + j).to_string());
+                        app::sleep(0.01);
+                        app::awake();
+                        table.redraw();
+                    }
                 }
             }
         }
-    }});
+    });
 
     std::thread::spawn(move || {
         app::sleep(0.12);
