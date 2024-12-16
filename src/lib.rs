@@ -234,6 +234,7 @@ impl SmartTable {
             self.inp = Some(input::Input::default());
             let mut inp = self.inp.as_ref().unwrap().clone();
             inp.set_trigger(CallbackTrigger::EnterKey);
+            self.table.add(&inp);
             inp.hide();
 
             inp.set_callback({
