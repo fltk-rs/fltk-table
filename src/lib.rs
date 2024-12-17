@@ -6,7 +6,7 @@ use fltk::{
     enums::*,
     input,
     prelude::{GroupExt, InputExt, TableExt, WidgetBase, WidgetExt},
-    table,
+    table, window,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -234,7 +234,10 @@ impl SmartTable {
             self.inp = Some(input::Input::default());
             let mut inp = self.inp.as_ref().unwrap().clone();
             inp.set_trigger(CallbackTrigger::EnterKey);
-            self.table.add(&inp);
+            let win = window::Window::from_dyn_widget_ptr(
+                self.table.top_window().unwrap().as_widget_ptr(),
+            );
+            win.unwrap().add(&inp);
             inp.hide();
 
             inp.set_callback({
