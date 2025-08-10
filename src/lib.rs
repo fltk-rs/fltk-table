@@ -14,14 +14,14 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Default, Clone)]
 pub struct Cell {
-    label: String,
-    color: Option<Color>,
-    font: Option<Font>,
-    font_color: Option<Color>,
-    font_size: Option<i32>,
-    selection_color: Option<Color>,
-    align: Option<Align>,
-    border_color: Option<Color>,
+    pub label: String,
+    pub color: Option<Color>,
+    pub font: Option<Font>,
+    pub font_color: Option<Color>,
+    pub font_size: Option<i32>,
+    pub selection_color: Option<Color>,
+    pub align: Option<Align>,
+    pub border_color: Option<Color>,
 }
 
 impl Cell {
